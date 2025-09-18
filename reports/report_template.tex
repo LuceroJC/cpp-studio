@@ -1,0 +1,32 @@
+% One‑page session summary (LaTeX) — compile with pdflatex
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\begin{document}
+\section*{CPP Studio — Session Summary}
+Patient/Subject: \underline{\hspace{3in}} \hfill Date: \underline{\hspace{1in}}
+
+
+\subsection*{Summary Metrics}
+\begin{tabular}{@{}llllll@{}}
+\toprule
+File & Mean CPPS (dB) & Median CPPS (dB) & % Voiced & Mean F0 (Hz) & Duration (s)\\
+\midrule
+% Fill from CSV or manual entry
+\bottomrule
+\end{tabular}
+
+
+\subsection*{Notes}
+\vspace{2em}
+\noindent\rule{\textwidth}{0.4pt}
+
+
+\subsection*{Figures}
+Include exported time‑series and histogram PNGs here.
+
+
+\vfill
+\footnotesize{Measurement/visualization tool for research/education; not a medical device.}
+\end{document}

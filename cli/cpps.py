@@ -124,7 +124,7 @@ def compute_cpps_for_file(
         x = np.mean(x, axis=1)
     x = x.astype(np.float64)
 
-        # ---------- Praat-match path ----------
+    # ---------- Praat-match path ----------
     if praat_match:
         # Try to get CPP and F0 (new 4-tuple); fall back to old 2-tuple gracefully
         res = cpps_praat_match(

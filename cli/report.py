@@ -1,19 +1,10 @@
-# cli/report.py
+# # cli/report.py
 # CPP Studio — batch PDF report generator (A4/Letter, margins, optional logo)
 # Usage (Windows example):
-#   python -m cli.report --summary cpps_summary.csv --out cpps_batch_report.pdf \
-#       --title "CPP Studio — VOICED Healthy (N=30)" \
-#       --subtitle "Converted from VOICED (WFDB → WAV); 16 kHz mono" \
-#       --paper a4 \
-#       --margins "0.6" \
-#       --logo "C:\path\to\logo.png" --logo_width 1.2
-#
-# Notes:
-# - No LaTeX required. Outputs a single-page PDF using matplotlib.
-# - "--margins" accepts a single inch value for all sides (e.g., "0.6")
-#   or four comma-separated inch values "L,R,T,B" (e.g., "0.6,0.6,0.7,0.6").
-# - "--logo" is optional; if provided, it renders top-right in the header.
-# - If you need US Letter, pass --paper letter.
+#   cpps-report --summary cpps_summary.csv --out cpps_batch_report.pdf ^
+#       --title "CPP Studio — VOICED Healthy (N=30)" ^
+#       --subtitle "Converted from VOICED (WFDB → WAV); 16 kHz mono" ^
+#       --paper a4 --margins "0.6" --logo "C:\path\to\logo.png" --logo_width 1.2
 
 import argparse
 from pathlib import Path
@@ -23,7 +14,6 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import os
 from PIL import Image
-from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 
 # --------- Visual defaults (clean, print-friendly) ------------------------------
 plt.rcParams.update({
@@ -268,7 +258,7 @@ def make_report(
     ax_hist = fig.add_subplot(gs[2, 0])
     _hist(ax_hist, m)
 
-    # Scatter full width
+    # Scatter (right)
     ax_scatter = fig.add_subplot(gs[2, 1])
     _scatter(ax_scatter, f0, m)
 
@@ -285,28 +275,63 @@ def make_report(
     fig.savefig(out_pdf, format="pdf", bbox_inches=None)
     plt.close(fig)
 
-# --------- CLI -------------------------------------------------------------------
+# --------- Public API (console entry hooks) -------------------------------------
 
-if __name__ == "__main__":
+def generate_report(
+    summary_csv: str,
+    out_pdf: str,
+    paper: str = "a4",
+    margins_in: float | str | None = None,
+    title: str = HEADER_DEFAULT,
+    logo_path: str | None = None,
+    subtitle: str = "",
+    logo_width: float | None = None,
+) -> None:
+    """
+    Thin wrapper to match a friendly signature for console entry points.
+    """
+    make_report(
+        summary_csv=Path(summary_csv),
+        out_pdf=Path(out_pdf),
+        title=title,
+        subtitle=subtitle,
+        paper=paper,
+        margins=str(margins_in) if isinstance(margins_in, (int, float)) else margins_in,
+        logo=logo_path,
+        logo_width=logo_width,
+    )
+
+def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="CPP Studio — generate one-page PDF report from summary CSV")
     p.add_argument("--summary", required=True, help="Path to cpps_summary.csv")
     p.add_argument("--out", default="cpps_batch_report.pdf", help="Output PDF path")
     p.add_argument("--title", default=HEADER_DEFAULT, help="Report title")
     p.add_argument("--subtitle", default="", help="Optional subtitle (e.g., dataset slice)")
     p.add_argument("--paper", choices=["a4", "letter"], default="a4", help="Paper size for PDF canvas")
-    p.add_argument("--margins", default=None,
+    p.add_argument("--margins",
                    help="Margins in inches. Single value '0.6' or 'L,R,T,B' like '0.6,0.6,0.7,0.6'")
-    p.add_argument("--logo", default=None, help="Path to a logo image (PNG/JPG/SVG readable by matplotlib)")
-    p.add_argument("--logo_width", type=float, default=None, help="Logo width in inches (default 1.2)")
-    args = p.parse_args()
+    p.add_argument("--logo", help="Path to a logo image (PNG/JPG/SVG readable by matplotlib)")
+    p.add_argument("--logo_width", type=float, help="Logo width in inches (default 1.2)")
+    return p
 
-    make_report(
-        Path(args.summary),
-        Path(args.out),
-        title=args.title,
-        subtitle=args.subtitle,
+def main() -> None:
+    args = build_parser().parse_args()
+    # Ensure output dir exists
+    out_pdf = Path(args.out)
+    out_pdf.parent.mkdir(parents=True, exist_ok=True)
+    # Call through the wrapper for consistency
+    generate_report(
+        summary_csv=str(Path(args.summary)),
+        out_pdf=str(out_pdf),
         paper=args.paper,
-        margins=args.margins,
-        logo=args.logo,
+        margins_in=args.margins,
+        title=args.title,
+        logo_path=args.logo,
+        subtitle=args.subtitle,
         logo_width=args.logo_width,
     )
+    print(f"Report written to {out_pdf}")
+
+# Still allow `python -m cli.report ...`
+if __name__ == "__main__":
+    main()

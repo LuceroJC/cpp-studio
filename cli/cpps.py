@@ -1,32 +1,66 @@
 from pathlib import Path
+import os
 import numpy as np
 import pandas as pd
 import soundfile as sf
+import matplotlib.pyplot as plt
 from scipy.signal import get_window
 from scipy.fft import rfft, irfft, rfftfreq
-from cpps.praat_match import cpps_praat_match
+from .praat_match import cpps_praat_match    
+
+
+# --------- helpers ---------
+def save_timecourse_plot(times_s: np.ndarray, cpps_db: np.ndarray, out_png: str, title: str = "CPPS time course"):
+    """Save a simple CPPS time-course PNG."""
+    fig, ax = plt.subplots(figsize=(8, 2.5))
+    ax.plot(times_s, cpps_db, linewidth=1.2)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("CPPS (dB)")
+    ax.set_title(title)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(out_png, dpi=150)
+    plt.close(fig)
+
+
+def write_frame_csv(path: str, wav_path: str, times_s: np.ndarray, cpps_db: np.ndarray, f0_hz: np.ndarray | None = None):
+    """Write per-frame CSV with file, time_s, cpps_db, (optional) f0_hz."""
+    data = {
+        "file": [os.path.basename(wav_path)] * len(times_s),
+        "time_s": times_s,
+        "cpps_db": cpps_db,
+    }
+    if f0_hz is not None:
+        data["f0_hz"] = f0_hz
+    pd.DataFrame(data).to_csv(path, index=False)
+# ---------------------------
+
 
 # Simple F0 band -> quefrency window (seconds)
 def _q_range(f0_min, f0_max):
     return 1.0 / f0_max, 1.0 / f0_min
+
 
 def _preemphasis(x, alpha=0.97):
     y = np.copy(x)
     y[1:] = x[1:] - alpha * x[:-1]
     return y
 
+
 def _frame_signal(x, fs, frame_ms=40, hop_pct=50):
     N = int(frame_ms * 1e-3 * fs)
-    H = max(1, int(N * (hop_pct/100)))
-    w = get_window('hamming', N, fftbins=True)
+    H = max(1, int(N * (hop_pct / 100)))
+    w = get_window("hamming", N, fftbins=True)
     frames = []
-    for start in range(0, len(x)-N+1, H):
-        frames.append(x[start:start+N] * w)
+    for start in range(0, len(x) - N + 1, H):
+        frames.append(x[start : start + N] * w)
     return np.array(frames), N, H
+
 
 def _energy_db(x):
     rms = np.sqrt(np.mean(x**2) + 1e-12)
-    return 20*np.log10(rms + 1e-12)
+    return 20 * np.log10(rms + 1e-12)
+
 
 def _cpp_single_frame(frame, fs, f0_min=60, f0_max=500):
     # Cepstrum of log magnitude spectrum
@@ -47,7 +81,7 @@ def _cpp_single_frame(frame, fs, f0_min=60, f0_max=500):
     # Linear regression baseline through the segment
     A = np.vstack([t_seg, np.ones_like(t_seg)]).T
     m, b = np.linalg.lstsq(A, c_seg, rcond=None)[0]
-    baseline = m*t_seg + b
+    baseline = m * t_seg + b
 
     # Peak prominence (in log-amp units); convert to dB (factor ~8.686)
     peak_val = np.max(c_seg)
@@ -59,6 +93,7 @@ def _cpp_single_frame(frame, fs, f0_min=60, f0_max=500):
     q_peak = t_seg[peak_idx]
     f0 = 1.0 / q_peak if q_peak > 0 else np.nan
     return cpp, f0
+
 
 def compute_cpps_for_file(
     path,
@@ -74,8 +109,8 @@ def compute_cpps_for_file(
     # NEW: Praat-aligned options
     praat_match: bool = False,
     praat_bias_db: float | None = None,
-    hop_ms: float | None = 20.0,         # used only in Praat-match mode
-    preemph_from_hz: float = 50.0,       # used only in Praat-match mode
+    hop_ms: float | None = 20.0,  # used only in Praat-match mode
+    preemph_from_hz: float = 50.0,  # used only in Praat-match mode
 ):
     """
     Compute CPPS summary (and optionally per-frame) for one file.
@@ -89,11 +124,12 @@ def compute_cpps_for_file(
         x = np.mean(x, axis=1)
     x = x.astype(np.float64)
 
-    # ---------- Praat-match path ----------
+        # ---------- Praat-match path ----------
     if praat_match:
-        # Compute per-frame CPPS with Praat-aligned algorithm
-        per_frame, mean_cpp = cpps_praat_match(
-            x, fs,
+        # Try to get CPP and F0 (new 4-tuple); fall back to old 2-tuple gracefully
+        res = cpps_praat_match(
+            x,
+            fs,
             f0min=float(f0_min),
             f0max=float(f0_max),
             frame_ms=float(frame_ms) if frame_ms else 40.0,
@@ -101,20 +137,34 @@ def compute_cpps_for_file(
             preemph_from_hz=float(preemph_from_hz),
             gate_db=float(energy_gate_db) if energy_gate_db is not None else 20.0,
         )
+        if isinstance(res, tuple) and len(res) == 4:
+            per_frame, mean_cpp, f0_series, mean_f0 = res
+        else:
+            per_frame, mean_cpp = res  # old signature
+            f0_series = np.full_like(per_frame, np.nan, dtype=float)
+            mean_f0 = np.nan
 
-        # Optional constant bias to align to Praat numerically
+        # Optional constant bias to align to Praat numerically (CPP only)
         if praat_bias_db is not None and np.isfinite(mean_cpp):
             mean_cpp = float(mean_cpp) + float(praat_bias_db)
             if per_frame.size:
                 per_frame = per_frame + float(praat_bias_db)
 
-        # Per-frame DataFrame (no F0 from this path — set NaN)
+        # Per-frame DataFrame with time stamps
         if return_per_frame:
-            pf = pd.DataFrame({
-                "frame_index": np.arange(len(per_frame), dtype=int),
-                "cpps_db": per_frame if per_frame.size else np.array([], dtype=float),
-                "f0_hz": np.full(len(per_frame), np.nan) if per_frame.size else np.array([], dtype=float),
-            })
+            n = int(len(per_frame))
+            hop_s = (float(hop_ms) if hop_ms else 20.0) * 1e-3
+            frame_s = (float(frame_ms) if frame_ms else 40.0) * 1e-3
+            times = np.arange(n) * hop_s + 0.5 * frame_s
+            pf = pd.DataFrame(
+                {
+                    "frame_index": np.arange(n, dtype=int),
+                    "time_s": times,
+                    "cpps_db": per_frame if per_frame.size else np.array([], dtype=float),
+                    "f0_hz": f0_series if f0_series.size else np.array([], dtype=float),
+                }
+            )
+
         # Summary metrics
         if per_frame.size:
             median_cpp = float(np.nanmedian(per_frame))
@@ -131,13 +181,14 @@ def compute_cpps_for_file(
             "mean_cpps_db": round(float(mean_cpp), 3) if np.isfinite(mean_cpp) else None,
             "median_cpps_db": round(float(median_cpp), 3) if np.isfinite(median_cpp) else None,
             "%voiced_frames": round(voiced_pct, 2),
-            "mean_f0_hz": None,  # not computed in Praat-match path
+            "mean_f0_hz": round(float(mean_f0), 2) if np.isfinite(mean_f0) else None,  # now set
             "frames": n_frames,
             "duration_s": round(duration, 3),
         }
         return (summary, pf) if return_per_frame else summary
 
-    # ---------- Original path (unchanged) ----------
+
+    # ---------- Original path (unchanged behavior) ----------
     x = _preemphasis(x, preemph_alpha)
 
     frames, N, H = _frame_signal(x, fs, frame_ms, hop_pct)
@@ -153,7 +204,7 @@ def compute_cpps_for_file(
 
     vals = np.array(out)
     cpps = vals[:, 0]
-    f0s  = vals[:, 1]
+    f0s = vals[:, 1]
 
     # Median smoothing for CPPS across frames (odd window only)
     if med_smooth_frames and med_smooth_frames > 1:
@@ -189,13 +240,22 @@ def compute_cpps_for_file(
     }
 
     if return_per_frame:
-        pf = pd.DataFrame({
-            "frame_index": np.arange(len(frames)),
-            "cpps_db": cpps,
-            "f0_hz": f0s,
-        })
+        # center-of-frame time = i*H/fs + N/(2*fs)
+        n = len(frames)
+        hop_s = H / fs
+        frame_s = N / fs
+        times = np.arange(n) * hop_s + 0.5 * frame_s
+        pf = pd.DataFrame(
+            {
+                "frame_index": np.arange(n),
+                "time_s": times,
+                "cpps_db": cpps,
+                "f0_hz": f0s,
+            }
+        )
         return summary, pf
     return summary
+
 
 def compute_cpps_batch(paths, **kwargs):
     summaries = []

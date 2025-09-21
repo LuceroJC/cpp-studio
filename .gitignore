@@ -26,14 +26,14 @@ ENV/
 
 # Test & coverage
 
-.pytest\_cache/
+.pytest_cache/
 .coverage*
 htmlcov/
 .tox/
 
 # Notebooks
 
-.ipynb\_checkpoints/
+.ipynb_checkpoints/
 
 # IDE / editor
 
@@ -46,7 +46,7 @@ htmlcov/
 
 # OS metadata
 
-.DS\_Store
+.DS_Store
 Thumbs.db
 
 # Streamlit (local state)
@@ -57,23 +57,23 @@ Thumbs.db
 
 # One‑pager PDFs and plots
 
-cpps\_batch\_report.pdf
+cpps_batch_report.pdf
 reports/*.pdf
-frame\_plots/
+frame_plots/
 
 # Batch outputs (CSV time courses & summaries)
 
-**cpps\_framewise.csv
-cpps\_summary**.csv
-cpps\_praat\_summary.csv
+*_cpps_framewise.csv
+cpps_summary**.csv
+cpps_praat_summary.csv
 
-# LaTeX intermediates (for reports/report\_template.tex)
+# LaTeX intermediates (for reports/report_template.tex)
 
 *.aux
 *.bbl
 *.bcf
 *.blg
-*.fdb\_latexmk
+*.fdb_latexmk
 *.fls
 *.log
 *.out
@@ -81,7 +81,7 @@ cpps\_praat\_summary.csv
 *.synctex.gz
 *.toc
 
-# Audio & large data (keep tiny samples under data\_sample/ tracked)
+# Audio & large data (keep tiny samples under data_sample/ tracked)
 
 *.wav
 *.aif
@@ -89,7 +89,7 @@ cpps\_praat\_summary.csv
 *.flac
 *.mp3
 *.m4a
-!data\_sample/**
+!data_sample/**
 
 # Optional WFDB/PhysioNet raw files (uncomment if you don’t want them tracked)
 
@@ -119,5 +119,11 @@ logs/
 
 # Node/JS (if any UI experiments live in app/)
 
-node\_modules/
+node_modules/
 *.tsbuildinfo
+
+# Other
+
+*.zip
+*.tar.gz
+

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "cpp-studio"
 version = "0.1.0"
 description = "CPP Studio: batch CPPS/CPP metrics with CSV + PDF report, plus Praat-aligned mode."
-authors = [{ name = "<Your Name>", email = "<you@example.com>" }]
+authors = [{ name = "Jorge C. Lucero", email = "lucerojc@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }

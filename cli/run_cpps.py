@@ -1,33 +1,38 @@
+# cli/run_cpps.py
 import argparse
-import json
+import os
 from pathlib import Path
-from cli.cpps import compute_cpps_batch
+from cli.cpps import compute_cpps_batch, save_timecourse_plot
 
-parser = argparse.ArgumentParser(description="CPP Studio — batch CPPS/CPP analyzer")
-parser.add_argument("inputs", nargs="+", help="WAV files or a folder containing WAVs")
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(description="CPP Studio — batch CPPS/CPP analyzer")
+    p.add_argument("inputs", nargs="+", help="WAV files or a folder containing WAVs")
 
-# core analysis knobs (original)
-parser.add_argument("--frame_ms", type=int, default=40)
-parser.add_argument("--hop_pct", type=int, default=50)
-parser.add_argument("--preemph_alpha", type=float, default=0.97)
-parser.add_argument("--f0_min", type=int, default=60)
-parser.add_argument("--f0_max", type=int, default=500)
-parser.add_argument("--energy_gate_db", type=int, default=25)
-parser.add_argument("--med_smooth_frames", type=int, default=3)
+    # Core analysis knobs (original path)
+    p.add_argument("--frame_ms", type=int, default=40)
+    p.add_argument("--hop_pct", type=int, default=50)
+    p.add_argument("--preemph_alpha", type=float, default=0.97)
+    p.add_argument("--f0_min", type=int, default=60)
+    p.add_argument("--f0_max", type=int, default=500)
+    p.add_argument("--energy_gate_db", type=int, default=25)
+    p.add_argument("--med_smooth_frames", type=int, default=3)
 
-# outputs
-parser.add_argument("--per_frame", action="store_true", help="Save per-frame CSVs")
-parser.add_argument("--out", default="cpps_summary.csv")
+    # Outputs
+    p.add_argument("--per_frame", action="store_true", help="Save per-frame CSVs and PNG plots")
+    p.add_argument("--out", default="cpps_summary.csv")
+    p.add_argument("--plots-dir", default="frame_plots", help="Directory for per-file time-course PNGs")
 
-# NEW: Praat-match options (pass-through to compute_cpps_for_file)
-parser.add_argument("--praat-match", action="store_true",
-    help="Use Praat-aligned CPPS (power-cepstrum, exp-decay robust trend, Hann 40/20, pre-emph 50 Hz)")
-parser.add_argument("--praat-bias-db", type=float, default=None,
-    help="Constant (dB) to add to align Python to Praat (e.g. 6.83).")
-parser.add_argument("--hop-ms", type=float, default=20.0,
-    help="Hop size in milliseconds (Praat-match mode). Default: 20 ms.")
+    # Praat-match options (pass-through to compute_cpps_for_file)
+    p.add_argument("--praat-match", action="store_true",
+                   help="Use Praat-aligned CPPS (power-cepstrum, exp-decay robust trend, Hann 40/20, pre-emph 50 Hz)")
+    p.add_argument("--praat-bias-db", type=float, default=None,
+                   help="Constant (dB) to add to align Python to Praat (e.g. 6.83).")
+    p.add_argument("--hop-ms", type=float, default=20.0,
+                   help="Hop size in milliseconds (Praat-match mode). Default: 20 ms.")
+    return p
 
-if __name__ == "__main__":
+def main() -> None:
+    parser = build_parser()
     args = parser.parse_args()
 
     # expand inputs -> file list
@@ -39,7 +44,7 @@ if __name__ == "__main__":
         else:
             files.append(str(p))
 
-    # build kwargs for compute_cpps_batch (ensure new flags are forwarded)
+    # forward flags to compute_cpps_batch
     kwargs = dict(
         frame_ms=args.frame_ms,
         hop_pct=args.hop_pct,
@@ -49,8 +54,6 @@ if __name__ == "__main__":
         energy_gate_db=args.energy_gate_db,
         med_smooth_frames=args.med_smooth_frames,
         return_per_frame=args.per_frame,
-
-        # NEW
         praat_match=args.praat_match,
         praat_bias_db=args.praat_bias_db,
         hop_ms=args.hop_ms,
@@ -61,7 +64,17 @@ if __name__ == "__main__":
     df.to_csv(args.out, index=False)
 
     if args.per_frame:
+        os.makedirs(args.plots_dir, exist_ok=True)
         for path, pf in per_frame.items():
-            pf.to_csv(f"{Path(path).stem}_perframe.csv", index=False)
+            stem = Path(path).stem
+            # per-frame CSV next to audio stem
+            pf.to_csv(f"{stem}_cpps_framewise.csv", index=False)
+            # time-course PNG
+            times = pf["time_s"].to_numpy() if "time_s" in pf.columns else pf.index.to_numpy().astype(float)
+            save_path = Path(args.plots_dir) / f"{stem}_cpps.png"
+            save_timecourse_plot(times, pf["cpps_db"].to_numpy(), str(save_path), title=f"CPPS: {stem}")
 
     print(f"Wrote {args.out} with {len(df)} files.")
+
+if __name__ == "__main__":
+    main()

@@ -1,11 +1,11 @@
 # Python bytecode & build artifacts
 
 **pycache**/
-\*.py\[cod]
-\*.pyo
-\*.so
-\*.egg
-\*.egg-info/
+*.py\[cod]
+*.pyo
+*.so
+*.egg
+*.egg-info/
 .eggs/
 build/
 dist/
@@ -21,13 +21,13 @@ ENV/
 # Environment files / secrets
 
 .env
-.env.\*
-\*.env
+.env.*
+*.env
 
 # Test & coverage
 
 .pytest\_cache/
-.coverage\*
+.coverage*
 htmlcov/
 .tox/
 
@@ -39,10 +39,10 @@ htmlcov/
 
 .vscode/
 .idea/
-\*.code-workspace
-\*.swp
-\*.swo
-\*\~
+*.code-workspace
+*.swp
+*.swo
+*\~
 
 # OS metadata
 
@@ -58,7 +58,7 @@ Thumbs.db
 # One‑pager PDFs and plots
 
 cpps\_batch\_report.pdf
-reports/\*.pdf
+reports/*.pdf
 frame\_plots/
 
 # Batch outputs (CSV time courses & summaries)
@@ -69,50 +69,50 @@ cpps\_praat\_summary.csv
 
 # LaTeX intermediates (for reports/report\_template.tex)
 
-\*.aux
-\*.bbl
-\*.bcf
-\*.blg
-\*.fdb\_latexmk
-\*.fls
-\*.log
-\*.out
-\*.run.xml
-\*.synctex.gz
-\*.toc
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb\_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
 
 # Audio & large data (keep tiny samples under data\_sample/ tracked)
 
-\*.wav
-\*.aif
-\*.aiff
-\*.flac
+*.wav
+*.aif
+*.aiff
+*.flac
 *.mp3
 *.m4a
 !data\_sample/**
 
 # Optional WFDB/PhysioNet raw files (uncomment if you don’t want them tracked)
 
-# \*.dat
+# *.dat
 
-# \*.hea
+# *.hea
 
 # Praat temporary/backup files
 
-\*.bak
-\*.backup
-\*.orig
+*.bak
+*.backup
+*.orig
 
 # Docker / containers
 
 # Ignore local cache layers or compose env if you use them
 
 .docker/
-\*\*/.dockerignore
+**/.dockerignore
 
 # Logs & temp
 
-\*.log
+*.log
 logs/
 /tmp/
 .temp/
@@ -120,4 +120,4 @@ logs/
 # Node/JS (if any UI experiments live in app/)
 
 node\_modules/
-\*.tsbuildinfo
+*.tsbuildinfo

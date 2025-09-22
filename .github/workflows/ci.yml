@@ -44,13 +44,12 @@ jobs:
         run: >
           python -c "from pathlib import Path; import numpy as np, soundfile as sf;
           sr=16000; t=np.arange(int(0.8*sr))/sr; tones=[120,150,200];
-          outdir=Path('data_sample'); outdir.mkdir(exist_ok=True);
+          outdir=Path('ci_data'); outdir.mkdir(exist_ok=True);
           [sf.write(outdir/f'ci_{i:02d}.wav', (0.1*np.sin(2*np.pi*f*t)).astype('float32'), sr)
-          for i,f in enumerate(tones)];
-          print('WAVs:', [str(p) for p in outdir.glob('ci_*.wav')])"
+          for i,f in enumerate(tones)]"
 
       - name: "Smoke: run cpps-run (Praat-match) with per-frame"
-        run: python -m cli.run_cpps data_sample --praat-match --per_frame --out cpps_summary_ci.csv
+        run: python -m cli.run_cpps ci_data --praat-match --per_frame --out cpps_summary_ci.csv
 
       - name: "Smoke: build one-page PDF"
         run: python -m cli.report --summary cpps_summary_ci.csv --out cpps_batch_report_ci.pdf --paper a4 --margins 0.6 --title "CPP Studio (CI)"

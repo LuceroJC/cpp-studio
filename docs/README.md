@@ -1,5 +1,7 @@
 # CPP Studio — CPPS/CPP Batch Analyzer (v0.1.0)
 
+[![CI](https://github.com/lucerojc/cpp-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/lucerojc/cpp-studio/actions/workflows/ci.yml)
+
 **Purpose:** Practical measurement & visualization of **Cepstral Peak Prominence (Smoothed)** for voice science, clinics, and labs. **Not a diagnostic device.**
 
 ---

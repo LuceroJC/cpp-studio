@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: tests (${{ matrix.os }}, py${{ matrix.python-version }})
+    name: "tests (${{ matrix.os }}, py${{ matrix.python-version }})"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -17,9 +17,11 @@ jobs:
         python-version: ['3.11']
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -38,25 +40,19 @@ jobs:
       - name: Run unit tests
         run: python -m pytest -q
 
-      - name: Smoke: generate synthetic WAVs
-        run: |
-          python - << 'PY'
-          from pathlib import Path
-          import numpy as np, soundfile as sf
-          sr = 16000
-          t = np.arange(int(0.8*sr)) / sr
-          tones = [120, 150, 200]
-          outdir = Path('data_sample'); outdir.mkdir(exist_ok=True)
-          for i, f0 in enumerate(tones):
-            x = (0.1*np.sin(2*np.pi*f0*t)).astype('float32')
-            sf.write(outdir / f'ci_{i:02d}.wav', x, sr)
-          print('WAVs:', list(outdir.glob('ci_*.wav')))
-          PY
+      - name: "Smoke: generate synthetic WAVs"
+        run: >
+          python -c "from pathlib import Path; import numpy as np, soundfile as sf;
+          sr=16000; t=np.arange(int(0.8*sr))/sr; tones=[120,150,200];
+          outdir=Path('data_sample'); outdir.mkdir(exist_ok=True);
+          [sf.write(outdir/f'ci_{i:02d}.wav', (0.1*np.sin(2*np.pi*f*t)).astype('float32'), sr)
+          for i,f in enumerate(tones)];
+          print('WAVs:', [str(p) for p in outdir.glob('ci_*.wav')])"
 
-      - name: Smoke: run cpps-run (Praat-match) with per-frame
+      - name: "Smoke: run cpps-run (Praat-match) with per-frame"
         run: python -m cli.run_cpps data_sample --praat-match --per_frame --out cpps_summary_ci.csv
 
-      - name: Smoke: build one-page PDF
+      - name: "Smoke: build one-page PDF"
         run: python -m cli.report --summary cpps_summary_ci.csv --out cpps_batch_report_ci.pdf --paper a4 --margins 0.6 --title "CPP Studio (CI)"
 
       - name: Upload CI artifacts
@@ -69,12 +65,14 @@ jobs:
             frame_plots/**
 
   build:
-    name: build (wheel + sdist)
+    name: "build (wheel + sdist)"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'

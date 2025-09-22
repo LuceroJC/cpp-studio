@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cpp-studio"
+version = "0.1.0"
+description = "CPP Studio: batch CPPS/CPP metrics with CSV + PDF report, plus Praat-aligned mode."
+authors = [{ name = "Jorge C. Lucero", email = "lucerojc@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["voice", "acoustics", "CPPS", "Praat", "DSP", "phonation"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.11",
+  "librosa>=0.10",
+  "soundfile>=0.12",
+  "pandas>=2.0",
+  "matplotlib>=3.8",
+  "tqdm>=4.66",
+  "reportlab>=4.0",
+  "wfdb>=4.1"
+]
+
+[project.optional-dependencies]
+app = ["streamlit>=1.32"]
+
+[project.scripts]
+cpps-run = "cli.run_cpps:main"
+cpps-report = "cli.report:main"
+
+[tool.setuptools]
+packages = ["cli"]
+
+[tool.setuptools.package-data]
+cli = ["*.py"]

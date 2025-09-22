@@ -1,0 +1,14 @@
+This sample pack includes audio derived from the VOICED Database (v1.0.0), PhysioNet.
+
+Source: VOICED Database — Laura Verde, Giovanna Sannino (2018).
+Access policy: Open Access. License: Open Data Commons Attribution (ODC-By) v1.0.
+Dataset DOI (version 1.0.0): https://doi.org/10.13026/C25Q2N
+PhysioNet record: https://physionet.org/content/voiced/1.0.0/
+
+Please cite both:
+1) U. Cesari, G. De Pietro, E. Marciano, C. Niri, G. Sannino, and L. Verde, 
+   “A new database of healthy and pathological voices,” Computers & Electrical Engineering, 68:310–321, 2018.
+2) A. L. Goldberger et al., “PhysioBank, PhysioToolkit, and PhysioNet,” Circulation, 101(23):e215–e220, 2000.
+
+Redistribution under ODC-By 1.0 requires attribution to the original authors and PhysioNet.
+No PHI is included. Audio has been converted from WFDB to WAV for convenience.

@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, feat/per-frame-export ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: "tests (${{ matrix.os }}, py${{ matrix.python-version }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.11']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install libsndfile (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsndfile1
+
+      - name: Install package (editable) + pytest
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+
+      - name: Run unit tests
+        run: python -m pytest -q
+
+      - name: "Smoke: generate synthetic WAVs"
+        run: >
+          python -c "from pathlib import Path; import numpy as np, soundfile as sf;
+          sr=16000; t=np.arange(int(0.8*sr))/sr; tones=[120,150,200];
+          outdir=Path('ci_data'); outdir.mkdir(exist_ok=True);
+          [sf.write(outdir/f'ci_{i:02d}.wav', (0.1*np.sin(2*np.pi*f*t)).astype('float32'), sr)
+          for i,f in enumerate(tones)]"
+
+      - name: "Smoke: run cpps-run (Praat-match) with per-frame"
+        run: python -m cli.run_cpps ci_data --praat-match --per_frame --out cpps_summary_ci.csv
+
+      - name: "Smoke: build one-page PDF"
+        run: python -m cli.report --summary cpps_summary_ci.csv --out cpps_batch_report_ci.pdf --paper a4 --margins 0.6 --title "CPP Studio (CI)"
+
+      - name: Upload CI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpps-ci-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            cpps_summary_ci.csv
+            cpps_batch_report_ci.pdf
+            frame_plots/**
+
+  build:
+    name: "build (wheel + sdist)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+
+      - name: Build
+        run: python -m build
+
+      - name: Upload dist/
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*

@@ -1,0 +1,129 @@
+# Python bytecode & build artifacts
+
+**pycache**/
+*.py\[cod]
+*.pyo
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments & Python tooling
+
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# Environment files / secrets
+
+.env
+.env.*
+*.env
+
+# Test & coverage
+
+.pytest_cache/
+.coverage*
+htmlcov/
+.tox/
+
+# Notebooks
+
+.ipynb_checkpoints/
+
+# IDE / editor
+
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+*\~
+
+# OS metadata
+
+.DS_Store
+Thumbs.db
+
+# Streamlit (local state)
+
+.streamlit/
+
+# Reports & generated artifacts (safe to keep ignored)
+
+# One‑pager PDFs and plots
+
+cpps_batch_report.pdf
+reports/*.pdf
+frame_plots/
+
+# Batch outputs (CSV time courses & summaries)
+
+*_cpps_framewise.csv
+cpps_summary**.csv
+cpps_praat_summary.csv
+
+# LaTeX intermediates (for reports/report_template.tex)
+
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+
+# Audio & large data (keep tiny samples under data_sample/ tracked)
+
+*.wav
+*.aif
+*.aiff
+*.flac
+*.mp3
+*.m4a
+!data_sample/**
+
+# Optional WFDB/PhysioNet raw files (uncomment if you don’t want them tracked)
+
+# *.dat
+
+# *.hea
+
+# Praat temporary/backup files
+
+*.bak
+*.backup
+*.orig
+
+# Docker / containers
+
+# Ignore local cache layers or compose env if you use them
+
+.docker/
+**/.dockerignore
+
+# Logs & temp
+
+*.log
+logs/
+/tmp/
+.temp/
+
+# Node/JS (if any UI experiments live in app/)
+
+node_modules/
+*.tsbuildinfo
+
+# Other
+
+*.zip
+*.tar.gz
+

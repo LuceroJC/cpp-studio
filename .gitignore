@@ -9,6 +9,11 @@
 .eggs/
 build/
 dist/
+*.spec
+
+# python cache
+__pycache__/
+*.pyc
 
 # Virtual environments & Python tooling
 
@@ -17,6 +22,8 @@ venv/
 env/
 ENV/
 .python-version
+.venv-*/
+**/.venv/
 
 # Environment files / secrets
 
@@ -93,9 +100,8 @@ cpps_praat_summary.csv
 
 # Optional WFDB/PhysioNet raw files (uncomment if you don’t want them tracked)
 
-# *.dat
-
-# *.hea
+*.dat
+*.hea
 
 # Praat temporary/backup files
 
@@ -127,3 +133,19 @@ node_modules/
 *.zip
 *.tar.gz
 
+# installer output + local release bundles
+installer/Output/
+releases/
+CHECKSUMS.txt
+
+# test scratch
+_test_win/
+_test_nix/
+
+# data & plots generated locally
+*.csv
+*.pdf
+
+# OS/editor
+.DS_Store
+Thumbs.db

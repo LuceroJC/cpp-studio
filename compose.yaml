@@ -1,0 +1,30 @@
+name: cpp-studio
+services:
+  app:                       # default: slim
+    build:
+      context: .
+      dockerfile: Dockerfile.slim
+    image: ghcr.io/lucerojc/cpp-studio:slim
+    ports: ["8501:8501"]
+    working_dir: /work
+    volumes:
+      - ./:/work
+      - ./data_sample:/data
+    command: >
+      streamlit run app/streamlit_app.py
+      --server.headless=true --browser.gatherUsageStats=false
+
+  app-full:                  # opt-in: full (LaTeX)
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/lucerojc/cpp-studio:full
+    ports: ["8501:8501"]
+    working_dir: /work
+    volumes:
+      - ./:/work
+      - ./data_sample:/data
+    command: >
+      streamlit run app/streamlit_app.py
+      --server.headless=true --browser.gatherUsageStats=false
+    profiles: ["full"]

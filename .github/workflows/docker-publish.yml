@@ -1,15 +1,19 @@
+# .github/workflows/docker-publish.yml
 name: Publish Docker images (slim & full) on tag
+
 on:
   push:
-    tags:
-      - 'v*'   # e.g., v0.1.0
+    tags: ['v*']            # e.g., v0.1.0
+  workflow_dispatch: {}     # allow manual runs from Actions tab
+  release:
+    types: [published]      # also fire when you publish a GitHub Release
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write   # allows pushing to GHCR with GITHUB_TOKEN
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -21,6 +25,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 👇 derive lowercase ghcr path: ghcr.io/<owner>/<repo>
+      - name: Compute image base (lowercase)
+        run: |
+          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+          echo "REF=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+
       # Build & push SLIM
       - name: Build & push slim
         uses: docker/build-push-action@v6
@@ -29,8 +39,8 @@ jobs:
           file: Dockerfile.slim
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/cpp-studio:slim
-            ghcr.io/${{ github.repository_owner }}/cpp-studio:${{ github.ref_name }}-slim
+            ${{ env.IMAGE }}:slim
+            ${{ env.IMAGE }}:${{ env.REF }}-slim
 
       # Build & push FULL
       - name: Build & push full
@@ -40,5 +50,5 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/cpp-studio:full
-            ghcr.io/${{ github.repository_owner }}/cpp-studio:${{ github.ref_name }}-full
+            ${{ env.IMAGE }}:full
+            ${{ env.IMAGE }}:${{ env.REF }}-full
